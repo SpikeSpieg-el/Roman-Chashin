@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://spikespieg-el.github.io/Roman-Chashin/sitemap.xml
