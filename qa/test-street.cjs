@@ -1,0 +1,42 @@
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({headless:true});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())});
+ await page.goto('http://127.0.0.1:3000',{waitUntil:'networkidle'});
+ assert.equal(await page.locator('.street-card').count(),3);
+ assert.equal(await page.locator('.social-card').count(),2);
+ assert.equal(await page.locator('.telegram-card').getAttribute('href'),'https://t.me/Spike_Spige_L');
+ assert.equal(await page.locator('.vk-card').getAttribute('href'),'https://vk.ru/you.should.befriendly');
+ assert.equal(await page.locator('#motion-toggle').getAttribute('aria-pressed'),'true');
+ await page.locator('#motion-toggle').click();
+ assert.equal(await page.locator('#motion-toggle').getAttribute('aria-pressed'),'false');
+ assert.equal(await page.locator('body').evaluate(e=>e.classList.contains('motion-on')),false);
+ await page.reload();assert.equal(await page.locator('#motion-toggle').getAttribute('aria-pressed'),'false');
+ await page.locator('#motion-toggle').click();
+ await page.locator('[data-art="0"]').click();assert.equal(await page.locator('dialog').evaluate(e=>e.open),true);
+ await page.keyboard.press('ArrowRight');assert.match(await page.locator('#dialog-title').textContent(),/Синтез/);
+ await page.keyboard.press('Escape');
+ for(const width of [320,390,768,1440]){
+  await page.setViewportSize({width,height:900});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Overflow at '+width);
+ }
+ await page.setViewportSize({width:1440,height:1000});
+ await page.locator('#street').scrollIntoViewIfNeeded();await page.waitForTimeout(900);await page.screenshot({path:'/home/user/qa/street-block.png'});
+ await page.locator('#contact').scrollIntoViewIfNeeded();await page.waitForTimeout(900);await page.screenshot({path:'/home/user/qa/contact-block.png'});
+ const reduced=await browser.newPage({reducedMotion:'reduce'});await reduced.goto('http://127.0.0.1:3000');
+ assert.equal(await reduced.locator('#motion-toggle').getAttribute('aria-pressed'),'false');
+ assert.equal(await reduced.locator('#motion-toggle').isDisabled(),true);
+ assert.equal(await reduced.locator('.wire-cube').evaluate(e=>getComputedStyle(e).animationName),'none');
+ const nojs=await browser.newPage({javaScriptEnabled:false});await nojs.goto('http://127.0.0.1:3000');
+ assert.equal(await nojs.locator('#street-title').isVisible(),true);assert.equal(await nojs.locator('.telegram-card').isVisible(),true);
+ assert.equal(await nojs.locator('#motion-toggle').isVisible(),false);
+ const offline=await browser.newPage();await offline.goto('file:///home/user/Roman-Chashin.html');
+ await offline.locator('#street').scrollIntoViewIfNeeded();await offline.waitForTimeout(250);
+ assert.equal(await offline.locator('.street-visual img').evaluateAll(list=>list.filter(i=>!i.complete||!i.naturalWidth).length),0);
+ await offline.locator('[data-art="2"]').click();assert.match(await offline.locator('#dialog-title').textContent(),/Капсула/);
+ assert.deepEqual(errors,[]);
+ console.log('PASS: all 3 sports slots, VK/Telegram URLs, motion toggle + persistence, reduced motion, no-JS, gallery, offline HTML, 320/390/768/1440px overflow, asset responses and JS errors.');
+ await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

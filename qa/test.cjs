@@ -1,0 +1,8 @@
+const {chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:1100},deviceScaleFactor:1});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())});
+await page.goto('http://127.0.0.1:3000',{waitUntil:'networkidle'});await page.screenshot({path:'/home/user/qa/desktop.png',fullPage:true});
+await page.locator('[data-art="1"]').click();await page.waitForSelector('dialog[open]');console.log('Dialog title',await page.locator('#dialog-title').textContent());await page.keyboard.press('ArrowRight');console.log('Next',await page.locator('#dialog-title').textContent());await page.keyboard.press('Escape');console.log('Dialog closed',await page.locator('dialog').evaluate(e=>!e.open));
+await page.locator('summary').first().click();console.log('FAQ',await page.locator('details').first().getAttribute('open'));console.log('Desktop overflow',await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth));console.log('Schema nodes',await page.locator('#structured-data').evaluate(e=>JSON.parse(e.textContent)['@graph'].length));
+await page.setViewportSize({width:390,height:844});await page.goto('http://127.0.0.1:3000',{waitUntil:'networkidle'});await page.screenshot({path:'/home/user/qa/mobile.png',fullPage:true});console.log('Mobile overflow',await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
+console.log('Broken images',await page.locator('img').evaluateAll(imgs=>imgs.filter(i=>!i.complete||!i.naturalWidth).map(i=>i.src)));console.log('Errors',errors);await browser.close();})();

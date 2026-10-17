@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://example.org/</loc>
+    <image:image><image:loc>https://example.org/assets/roots.webp</image:loc><image:title>След I. Исток и Ремесло</image:title></image:image>
+    <image:image><image:loc>https://example.org/assets/synthesis.webp</image:loc><image:title>След II. Момент передачи и Синтез</image:title></image:image>
+    <image:image><image:loc>https://example.org/assets/future.webp</image:loc><image:title>След III. Капсула в будущее</image:title></image:image>
+    <image:image><image:loc>https://example.org/assets/street-skate.jpg</image:loc><image:title>Street Code — Скейтбординг</image:title></image:image>
+  </url>
+</urlset>

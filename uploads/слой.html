@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>СЛОЙ — графический стандарт знака</title>
+<link id="fav" rel="icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Manrope:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style>
+:root{
+  --paper:#F2EEE7; --panel:#E8E3D9; --rule:#D6CFC2;
+  --ink:#14120F; --ink2:#3A3630; --grey:#8B857B;
+  --o:#FF6A2E; --ot:#FF7A44; --ol:#E04A15; --or:#BC340C; --tint:#FFE2D2;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:Manrope,system-ui,-apple-system,sans-serif; font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+h1,h2,h3{margin:0}
+a{color:inherit}
+img{display:block;max-width:100%}
+::selection{background:var(--o);color:#fff}
+
+/* ---------- drafting rail ---------- */
+.rail{
+  position:fixed; left:0; top:0; bottom:0; width:68px; z-index:60;
+  background:var(--paper); border-right:1px solid var(--rule);
+  display:none; flex-direction:column; align-items:center; padding:14px 0 16px;
+}
+.rail .rmark{width:26px}
+.rail nav{margin:auto 0; display:flex; flex-direction:column; gap:14px; align-items:center}
+.rail nav a{
+  font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.1em; color:var(--grey);
+  text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:5px;
+  transition:color .25s ease;
+}
+.rail nav a i{display:block; width:16px; height:1.5px; background:var(--rule); transition:all .3s cubic-bezier(.2,.7,.2,1)}
+.rail nav a:hover{color:var(--ink)}
+.rail nav a.on{color:var(--o)}
+.rail nav a.on i{width:30px; background:var(--o)}
+.rail .rvert{
+  writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
+  font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.26em; color:var(--grey);
+  text-transform:uppercase;
+}
+@media(min-width:1024px){ body{padding-left:68px} .rail{display:flex} }
+
+/* ---------- sheet ---------- */
+main{--pad:clamp(18px,4vw,56px); padding:0 var(--pad); max-width:1560px; margin:0 auto}
+.topbar{
+  display:flex; align-items:center; gap:14px; padding:16px 0 14px;
+  border-bottom:1px solid var(--rule); position:sticky; top:0; background:var(--paper); z-index:40;
+}
+.topbar .tb-mk{width:30px; flex:none}
+.topbar .tb-n{font-family:Montserrat,sans-serif; font-weight:900; letter-spacing:-.02em; font-size:17px}
+.topbar .tb-s{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.18em; color:var(--grey); text-transform:uppercase}
+.topbar .tb-r{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; color:var(--grey); text-align:right}
+@media(max-width:640px){ .topbar .tb-s{display:none} }
+
+.plate{padding:56px 0 8px}
+.ph{display:flex; align-items:baseline; gap:18px; border-top:1.5px solid var(--ink); padding-top:13px; margin-bottom:34px; flex-wrap:wrap}
+.ph-n{font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.18em; color:var(--o); font-weight:500}
+.ph h2{font-family:Montserrat,sans-serif; font-weight:900; font-size:clamp(24px,3.2vw,42px); letter-spacing:-.025em; text-transform:uppercase; line-height:1}
+.ph-r{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.16em; color:var(--grey); text-transform:uppercase}
+@media(max-width:720px){ .ph-r{display:none} }
+.lede{max-width:62ch; color:var(--ink2); font-size:15.5px; margin:0 0 30px}
+.mlab{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.17em; text-transform:uppercase; color:var(--grey)}
+
+/* ---------- hero ---------- */
+.hero{
+  position:relative; display:grid; grid-template-columns:1fr 1.18fr; gap:clamp(24px,4vw,56px);
+  align-items:center; padding:clamp(30px,5vh,64px) 0 clamp(30px,5vh,56px);
+  background-image:
+    repeating-linear-gradient(120deg, rgba(20,18,15,.075) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(60deg, rgba(20,18,15,.075) 0 1px, transparent 1px 34px);
+  background-position:center;
+}
+.hero::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 90% at 30% 40%, rgba(242,238,231,.92) 0%, rgba(242,238,231,.55) 45%, rgba(242,238,231,0) 78%);
+}
+.hero > *{position:relative; z-index:2}
+.eyebrow{display:flex; align-items:center; gap:10px; margin-bottom:18px}
+.eyebrow i{display:block; width:34px; height:1.5px; background:var(--o)}
+h1.word{
+  font-family:Montserrat,sans-serif; font-weight:900; letter-spacing:-.045em; line-height:.84;
+  font-size:clamp(64px,8vw,138px); text-transform:uppercase;
+}
+.sub{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--grey); margin-top:16px}
+.hero p.note{max-width:44ch; color:var(--ink2); margin:22px 0 26px; font-size:15.5px}
+.toggle{display:inline-flex; border:1.5px solid var(--ink); background:var(--paper)}
+.toggle button{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase;
+  padding:11px 20px; background:transparent; border:0; color:var(--ink); cursor:pointer; transition:.25s ease;
+}
+.toggle button + button{border-left:1.5px solid var(--ink)}
+.toggle button.on{background:var(--ink); color:var(--paper)}
+.toggle button:focus-visible{outline:2px solid var(--o); outline-offset:3px}
+.stats{display:flex; gap:clamp(18px,3vw,42px); border-top:1px solid var(--rule); margin-top:30px; padding-top:15px; flex-wrap:wrap}
+.stats div{display:flex; flex-direction:column; gap:3px}
+.stats b{font-family:Montserrat,sans-serif; font-weight:800; font-size:clamp(19px,2vw,26px); letter-spacing:-.03em; line-height:1}
+.stats span{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.17em; text-transform:uppercase; color:var(--grey)}
+
+.stage{position:relative; width:100%; aspect-ratio:833/694}
+main section[id]{scroll-margin-top:78px}
+.stage .layer{position:absolute; inset:0}
+.stage .layer svg{width:100%; height:100%; display:block}
+.stage .draft{opacity:0; transition:opacity .45s ease}
+.stage .solid{opacity:1; transition:opacity .45s ease}
+.stage.mode-draft .draft{opacity:1}
+.stage.mode-draft .solid{opacity:0}
+@media(max-width:900px){ .hero{grid-template-columns:1fr} .stage{aspect-ratio:833/694; max-width:620px; margin:0 auto} }
+
+/* voxels */
+.vox{opacity:0; animation:voxIn .72s cubic-bezier(.2,.8,.25,1) forwards}
+@keyframes voxIn{ from{opacity:0; transform:translateY(-26px)} to{opacity:1; transform:none} }
+.wire polygon, .wire line{transition:stroke-dashoffset .95s cubic-bezier(.35,0,.15,1)}
+.draft .dim{transition:opacity .5s ease .55s; opacity:0}
+.stage.mode-draft .draft .dim{opacity:1}
+
+/* ---------- specs ---------- */
+.two{display:grid; grid-template-columns:.85fr 1.15fr; gap:clamp(24px,4vw,54px); align-items:start}
+@media(max-width:900px){ .two{grid-template-columns:1fr} }
+.spec{border-top:1px solid var(--ink)}
+.spec div{display:flex; justify-content:space-between; gap:16px; padding:11px 0; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:12.5px}
+.spec div span:first-child{color:var(--grey); letter-spacing:.06em; text-transform:uppercase; font-size:11px; padding-top:2px}
+.spec div span:last-child{font-weight:500; text-align:right}
+.drawpanel{background:var(--panel); border:1px solid var(--rule); padding:clamp(14px,2vw,26px); position:relative}
+.drawpanel svg{width:100%; height:auto; display:block}
+.drawcap{display:flex; justify-content:space-between; gap:12px; margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey)}
+
+/* ---------- lockups ---------- */
+.locks{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--rule); border:1px solid var(--rule)}
+@media(max-width:760px){ .locks{grid-template-columns:1fr} }
+.lock{background:var(--paper); padding:clamp(26px,4vw,52px); min-height:230px; display:flex; align-items:center; justify-content:center; position:relative}
+.lock .cap{position:absolute; left:14px; top:12px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--grey)}
+.lock .cap.b{top:auto; bottom:12px}
+.lk-h{display:flex; align-items:center; gap:clamp(14px,2vw,26px)}
+.lk-h .mk{width:clamp(58px,7vw,96px)}
+.lk-h .wd{font-family:Montserrat,sans-serif; font-weight:900; font-size:clamp(34px,4.6vw,64px); letter-spacing:-.045em; line-height:1}
+.lk-v{display:flex; flex-direction:column; align-items:center; gap:16px}
+.lk-v .mk{width:clamp(74px,9vw,120px)}
+.lk-v .wd{font-family:Montserrat,sans-serif; font-weight:900; font-size:clamp(26px,3.4vw,44px); letter-spacing:-.045em; line-height:1}
+
+.band{background:var(--ink); color:var(--paper); margin:44px calc(-1*var(--pad)) 0; padding:clamp(34px,5vw,64px) var(--pad)}
+.band .bh{display:flex; align-items:baseline; gap:18px; border-top:1.5px solid var(--paper); padding-top:13px; margin-bottom:30px; flex-wrap:wrap}
+.band .bh .ph-n{color:var(--o)}
+.band .bh h2{color:var(--paper)}
+.band .bh .ph-r{color:#6E6862}
+.band .locks{background:#2A2622; border-color:#2A2622}
+.band .lock{background:var(--ink)}
+.band .lock .cap{color:#6E6862}
+.lk-inv .wd{color:var(--paper)}
+.spotplate{background:var(--o); width:clamp(74px,9vw,116px); aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:20px}
+.spotplate .mk{width:64%}
+
+/* ---------- sizes / favicon ---------- */
+.sizes{display:flex; align-items:flex-end; gap:clamp(18px,3vw,44px); flex-wrap:wrap; padding:8px 0 6px}
+.sz{text-align:left}
+.sz .bx{background:var(--panel); border:1px solid var(--rule); display:flex; align-items:center; justify-content:center}
+.sz .bx svg{display:block}
+.sz .lb{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.12em; color:var(--grey); margin-top:9px}
+.favrow{display:grid; grid-template-columns:1.25fr .75fr; gap:clamp(20px,3vw,40px); align-items:start; margin-top:34px}
+@media(max-width:860px){ .favrow{grid-template-columns:1fr} }
+.tabmock{border:1px solid var(--rule); background:var(--panel); overflow:hidden}
+.tabbar{display:flex; gap:6px; padding:9px 10px 0; background:#DCD6CA}
+.tab{display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:8px 14px; background:#CFC8BB; color:#5D5850; max-width:270px; overflow:hidden; white-space:nowrap; border-radius:7px 7px 0 0}
+.tab.active{background:var(--paper); color:var(--ink)}
+.tab .fav{width:16px; height:16px; flex:none; display:block}
+.tab.active .fav{outline:none}
+.urlbar{background:var(--paper); border-top:1px solid var(--rule); padding:11px 14px; font-size:11.5px; color:var(--ink2); letter-spacing:.04em}
+.touchtile{background:var(--ink); border-radius:22%; width:min(180px,44vw); aspect-ratio:1; display:flex; align-items:center; justify-content:center; box-shadow:0 18px 40px -24px rgba(20,18,15,.7)}
+.touchtile .mk{width:76%}
+.tilwrap{display:flex; gap:22px; align-items:flex-end; flex-wrap:wrap}
+.tilwrap .col{display:flex; flex-direction:column; gap:10px}
+
+/* ---------- application ---------- */
+.apps{display:grid; grid-template-columns:1fr 1fr; gap:clamp(16px,2.4vw,30px)}
+@media(max-width:860px){ .apps{grid-template-columns:1fr} }
+figure{margin:0}
+.shot{position:relative; aspect-ratio:16/9; overflow:hidden; background:var(--panel); border:1px solid var(--rule)}
+.shot img{width:100%; height:100%; object-fit:cover}
+.shot.noimg img{display:none}
+.shot.noimg{background-image:repeating-linear-gradient(120deg, rgba(20,18,15,.08) 0 1px, transparent 1px 30px), repeating-linear-gradient(60deg, rgba(20,18,15,.08) 0 1px, transparent 1px 30px)}
+.shot .ov{position:absolute; left:6%; bottom:9%; display:flex; align-items:center; gap:14px}
+.shot .ov .mk{width:clamp(40px,5vw,64px); filter:drop-shadow(0 3px 10px rgba(0,0,0,.35))}
+.shot .ov .wd{font-family:Montserrat,sans-serif; font-weight:900; font-size:clamp(22px,3vw,40px); letter-spacing:-.045em; color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.45)}
+.cardmock{
+  position:absolute; right:7%; top:50%; transform:translateY(-50%) rotate(-3.5deg);
+  width:46%; aspect-ratio:1.75; background:var(--paper); box-shadow:0 22px 44px -20px rgba(0,0,0,.6);
+  padding:6% 7%; display:flex; flex-direction:column; justify-content:space-between;
+}
+.cardmock .top{display:flex; align-items:center; gap:9px}
+.cardmock .mk{width:26px}
+.cardmock .wd{font-family:Montserrat,sans-serif; font-weight:900; font-size:clamp(13px,1.6vw,21px); letter-spacing:-.04em}
+.cardmock .meta{font-family:'IBM Plex Mono',monospace; font-size:clamp(6px,.72vw,9px); letter-spacing:.13em; text-transform:uppercase; color:var(--grey); line-height:1.7}
+figcaption{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--grey); margin-top:10px; display:flex; justify-content:space-between; gap:14px}
+
+/* ---------- palette + type ---------- */
+.chips{display:flex; border:1px solid var(--rule); flex-wrap:wrap; gap:1px; background:var(--rule)}
+.chip{flex:1 1 150px; min-width:0; height:clamp(150px,17vw,206px); padding:14px; display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.chip:hover{transform:translateY(-7px)}
+.chip .nm{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.15em; text-transform:uppercase}
+.chip .hx{font-family:'IBM Plex Mono',monospace; font-size:13.5px; letter-spacing:.06em; font-weight:500}
+.typo{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--rule); border:1px solid var(--rule); margin-top:34px}
+@media(max-width:860px){ .typo{grid-template-columns:1fr} }
+.typo > div{background:var(--paper); padding:clamp(20px,2.6vw,32px); display:flex; flex-direction:column; gap:16px}
+.typo .spec-name{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--grey)}
+.samp-mont{font-family:Montserrat,sans-serif; font-weight:900; font-size:clamp(46px,6vw,80px); letter-spacing:-.05em; line-height:.9}
+.samp-plex{font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:clamp(24px,3vw,36px); letter-spacing:.02em}
+.samp-man{font-family:Manrope,sans-serif; font-size:15.5px; color:var(--ink2); line-height:1.6}
+.typo .use{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink); letter-spacing:.05em; border-top:1px solid var(--rule); padding-top:12px; margin-top:auto}
+
+/* ---------- dont's ---------- */
+.donts{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--rule); border:1px solid var(--rule)}
+@media(max-width:900px){ .donts{grid-template-columns:1fr 1fr} }
+@media(max-width:520px){ .donts{grid-template-columns:1fr} }
+.dont{background:var(--paper); padding:clamp(22px,3vw,34px) 18px; text-align:center; position:relative; overflow:hidden}
+.dont .mkbox{height:120px; display:flex; align-items:center; justify-content:center; position:relative}
+.dont .mkbox .mk{width:88px}
+.dont .mkbox::after,.dont .mkbox::before{content:""; position:absolute; left:8%; right:8%; top:50%; height:2px; background:var(--or); transform-origin:center}
+.dont .mkbox::before{transform:rotate(24deg)}
+.dont .mkbox::after{transform:rotate(-24deg)}
+.dont .txt{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2); margin-top:14px; line-height:1.6}
+.d1 .mkbox{transform:scaleX(1.42)}
+.d2 .mkbox{transform:rotate(-17deg)}
+.d3 .mkbox .mk{transform:skewY(-4deg)}
+.d4 .mkbox .mk{filter:drop-shadow(7px 9px 0 rgba(20,18,15,.42))}
+
+/* ---------- title block ---------- */
+.tblock{border:1.5px solid var(--ink); margin-top:64px; display:grid; grid-template-columns:repeat(6,1fr); background:var(--ink); gap:1.5px}
+@media(max-width:900px){ .tblock{grid-template-columns:repeat(3,1fr)} }
+@media(max-width:560px){ .tblock{grid-template-columns:repeat(2,1fr)} }
+.tblock .cell{background:var(--paper); padding:13px 14px 15px; min-height:74px}
+.tcell .k{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.17em; text-transform:uppercase; color:var(--grey); display:block; margin-bottom:7px}
+.tcell .v{font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500; letter-spacing:.02em}
+.dl{display:flex; gap:12px; flex-wrap:wrap; margin:34px 0 10px}
+.btn{
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+  padding:14px 22px; border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); cursor:pointer;
+  transition:.22s ease; display:inline-flex; align-items:center; gap:10px;
+}
+.btn:hover{background:var(--ink); color:var(--paper)}
+.btn.acc{background:var(--o); border-color:var(--o); color:#fff}
+.btn.acc:hover{background:var(--ink); border-color:var(--ink)}
+.btn:focus-visible{outline:2px solid var(--o); outline-offset:3px}
+.btn i{width:7px; height:7px; background:currentColor; display:block}
+
+footer.sheetfoot{border-top:1px solid var(--rule); margin-top:0; padding:18px 0 46px; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey)}
+
+#toast{position:fixed; left:50%; bottom:28px; transform:translate(-50%,26px); background:var(--ink); color:var(--paper);
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; padding:13px 22px;
+  opacity:0; pointer-events:none; transition:.35s cubic-bezier(.2,.7,.2,1); z-index:90}
+#toast.on{opacity:1; transform:translate(-50%,0)}
+
+.rv{opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1; transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important}
+  .rv{opacity:1; transform:none}
+  .vox{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<aside class="rail" aria-label="Навигация по листу">
+  <div class="rmark" data-mark="color" data-pad="4"></div>
+  <nav id="railnav">
+    <a href="#s1" data-t="s1"><i></i>01</a>
+    <a href="#s2" data-t="s2"><i></i>02</a>
+    <a href="#s3" data-t="s3"><i></i>03</a>
+    <a href="#s4" data-t="s4"><i></i>04</a>
+    <a href="#s5" data-t="s5"><i></i>05</a>
+    <a href="#s6" data-t="s6"><i></i>06</a>
+    <a href="#s7" data-t="s7"><i></i>07</a>
+  </nav>
+  <div class="rvert">Графический стандарт · Лист 1/1</div>
+</aside>
+
+<main>
+  <header class="topbar">
+    <div class="tb-mk" data-mark="color" data-pad="4"></div>
+    <div>
+      <div class="tb-n">СЛОЙ</div>
+      <div class="tb-s">Графический стандарт</div>
+    </div>
+    <div class="tb-r">Ревизия 03 · 02.2026<br>Формат A4 · 1:1</div>
+  </header>
+
+  <!-- 01 ЗНАК -->
+  <section class="plate" id="s1" style="padding-top:0">
+    <div class="hero">
+      <div class="rv">
+        <div class="eyebrow"><i></i><span class="mlab">01 / Знак</span></div>
+        <h1 class="word">Слой</h1>
+        <div class="sub">Изометрический знак · версия 3.0</div>
+        <p class="note">Знак собран из десяти модулей 1×1×1.2u и построен по осям изометрии 30°. Три грани, один источник света, никаких градиентов — только честная геометрия.</p>
+        <div class="toggle" role="group" aria-label="Режим показа знака">
+          <button type="button" class="on" id="btnMark">Знак</button>
+          <button type="button" id="btnDraft">Построение</button>
+        </div>
+        <div class="stats">
+          <div><b>10</b><span>модулей</span></div>
+          <div><b>30</b><span>граней</span></div>
+          <div><b>30°</b><span>ось</span></div>
+          <div><b>16 px</b><span>минимум</span></div>
+        </div>
+      </div>
+      <div class="stage mode-mark" id="stage">
+        <div class="layer solid" data-mark="color" data-anim="1" data-pad='{"t":44,"r":70,"b":130,"l":70}'></div>
+        <div class="layer draft" id="draftLayer"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 ПОСТРОЕНИЕ -->
+  <section class="plate" id="s2">
+    <div class="ph rv"><span class="ph-n">02</span><h2>Построение</h2><span class="ph-r">Ось 30° · модуль 1u · охранное поле 1u</span></div>
+    <div class="two">
+      <div class="rv">
+        <p class="lede">Знак никогда не рисуется «на глаз». Он всегда выводится из сетки: квадрат 4×4u, экструзия по вертикали 1.2u, три равновеликие грани по яркости. Охранное поле равно одному модулю со всех сторон и не может быть меньше.</p>
+        <div class="spec">
+          <div><span>Ось изометрии</span><span>30° / 30° / 90°</span></div>
+          <div><span>Модуль</span><span>1u = 1/4 ширины</span></div>
+          <div><span>Поле знака</span><span>4 × 4 × 1.2 u</span></div>
+          <div><span>Грани</span><span>3 / плоская заливка</span></div>
+          <div><span>Охранное поле</span><span>1u по периметру</span></div>
+          <div><span>Мин. размер</span><span>16 px · 6 мм</span></div>
+          <div><span>Формат вывода</span><span>SVG · PNG · ICO</span></div>
+        </div>
+      </div>
+      <div class="rv">
+        <div class="drawpanel" id="drawPanel"></div>
+        <div class="drawcap"><span>Рис. 2.1 — построение знака в охранном поле</span><span>Масштаб 1:1</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 ВЕРСИИ -->
+  <section class="plate" id="s3">
+    <div class="ph rv"><span class="ph-n">03</span><h2>Версии и лого-блок</h2><span class="ph-r">Горизонтальная · вертикальная · инверсная</span></div>
+    <div class="locks rv">
+      <div class="lock">
+        <span class="cap">А — горизонтальная</span>
+        <div class="lk-h"><div class="mk" data-mark="color" data-pad="6"></div><div class="wd">СЛОЙ</div></div>
+      </div>
+      <div class="lock">
+        <span class="cap">Б — вертикальная</span>
+        <div class="lk-v"><div class="mk" data-mark="color" data-pad="6"></div><div class="wd">СЛОЙ</div></div>
+      </div>
+      <div class="lock">
+        <span class="cap">В — монохром</span>
+        <div class="lk-h"><div class="mk" data-mark="ink" data-pad="6"></div><div class="wd" style="color:var(--ink)">СЛОЙ</div></div>
+      </div>
+      <div class="lock">
+        <span class="cap">Г — только знак</span>
+        <div class="lk-v"><div class="mk" style="width:clamp(96px,11vw,150px)" data-mark="ink" data-pad="6"></div></div>
+      </div>
+    </div>
+
+    <div class="band">
+      <div class="bh"><span class="ph-n">03.1</span><h2 style="font-family:Montserrat;font-weight:900;font-size:clamp(24px,3.2vw,42px);letter-spacing:-.025em;text-transform:uppercase">На тёмном</h2><span class="ph-r">Инверсия · плашка · выворотка</span></div>
+      <div class="locks">
+        <div class="lock lk-inv">
+          <span class="cap">Д — инверсная</span>
+          <div class="lk-h"><div class="mk" data-mark="paper" data-pad="6"></div><div class="wd">СЛОЙ</div></div>
+        </div>
+        <div class="lock">
+          <span class="cap">Е — на акцентной плашке</span>
+          <div class="lk-h" style="gap:clamp(14px,2vw,26px)">
+            <div class="spotplate"><div class="mk" data-mark="ink" data-pad="4"></div></div>
+            <div class="wd" style="color:var(--o)">СЛОЙ</div>
+          </div>
+        </div>
+        <div class="lock">
+          <span class="cap">Ж — выворотка</span>
+          <div class="lk-v"><div class="mk" data-mark="spot" data-pad="6"></div><div class="wd" style="color:var(--paper)">СЛОЙ</div></div>
+        </div>
+        <div class="lock">
+          <span class="cap">З — штамп 16 px</span>
+          <div class="lk-v" style="flex-direction:row;gap:26px">
+            <div class="mk" style="width:64px" data-mark="paper" data-pad="4"></div>
+            <div class="mk" style="width:32px" data-mark="paper" data-pad="4"></div>
+            <div class="mk" style="width:16px" data-mark="paper" data-pad="2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 РАЗМЕРЫ -->
+  <section class="plate" id="s4">
+    <div class="ph rv"><span class="ph-n">04</span><h2>Размеры и фавикон</h2><span class="ph-r">16 · 24 · 32 · 64 · 128 px</span></div>
+    <p class="lede rv">Знак читается от 16 px: толщина модуля в этом размере — 3 px, просвет «С» — 4 px. Ниже 16 px используйте упрощённый силуэт без экструзии.</p>
+    <div class="sizes rv">
+      <div class="sz"><div class="bx" style="width:16px;height:16px;padding:1px"><div style="width:14px" data-mark="color" data-pad="1"></div></div><div class="lb">16</div></div>
+      <div class="sz"><div class="bx" style="width:24px;height:24px;padding:2px"><div style="width:20px" data-mark="color" data-pad="2"></div></div><div class="lb">24</div></div>
+      <div class="sz"><div class="bx" style="width:32px;height:32px;padding:3px"><div style="width:26px" data-mark="color" data-pad="2"></div></div><div class="lb">32</div></div>
+      <div class="sz"><div class="bx" style="width:64px;height:64px;padding:6px"><div style="width:52px" data-mark="color" data-pad="4"></div></div><div class="lb">64</div></div>
+      <div class="sz"><div class="bx" style="width:128px;height:128px;padding:14px"><div style="width:100px" data-mark="color" data-pad="6"></div></div><div class="lb">128</div></div>
+      <div class="sz"><div class="bx" style="width:16px;height:16px;background:#14120F;border-color:#14120F"><div style="width:16px;height:16px" data-icon="1"></div></div><div class="lb">fav 16</div></div>
+    </div>
+
+    <div class="favrow">
+      <div class="rv">
+        <div class="mlab" style="margin-bottom:12px">Во вкладке браузера</div>
+        <div class="tabmock">
+          <div class="tabbar">
+            <span class="tab active"><span class="fav" data-icon="1"></span>СЛОЙ — графический стандарт</span>
+            <span class="tab">Новая вкладка</span>
+          </div>
+          <div class="urlbar mono">https://sloy.design/standart/01-znak</div>
+        </div>
+        <p class="lede" style="margin-top:18px">Иконка сохраняет углы скругления 22% и тёмную подложку: на любой нейтральной вкладке знак остаётся узнаваемым.</p>
+      </div>
+      <div class="rv">
+        <div class="mlab" style="margin-bottom:12px">Touch-иконка 180 px</div>
+        <div class="tilwrap">
+          <div class="col">
+            <div class="touchtile"><div class="mk" data-mark="color" data-pad="8"></div></div>
+            <div class="mlab">iOS · 180×180</div>
+          </div>
+          <div class="col">
+            <div class="touchtile" style="background:var(--o)"><div class="mk" data-mark="paper" data-pad="8"></div></div>
+            <div class="mlab">Акцент · 180×180</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 ПРИМЕНЕНИЕ -->
+  <section class="plate" id="s5">
+    <div class="ph rv"><span class="ph-n">05</span><h2>Применение</h2><span class="ph-r">Навигация · печатная продукция</span></div>
+    <div class="apps">
+      <figure class="rv">
+        <div class="shot">
+          <img src="https://images.pexels.com/photos/6064906/pexels-photo-6064906.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" alt="Трафаретная навигация на бетонной стене" loading="lazy" onerror="this.closest('.shot').classList.add('noimg')">
+          <div class="ov"><div class="mk" data-mark="paper" data-pad="4"></div><div class="wd">СЛОЙ</div></div>
+        </div>
+        <figcaption><span>01 — Навигация, бетон, шелкография</span><span>Pantone 021 C</span></figcaption>
+      </figure>
+      <figure class="rv">
+        <div class="shot">
+          <img src="https://images.pexels.com/photos/8947634/pexels-photo-8947634.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" alt="Визитные карточки на текстурной бумаге" loading="lazy" onerror="this.closest('.shot').classList.add('noimg')">
+          <div class="cardmock">
+            <div class="top"><div class="mk" data-mark="color" data-pad="3"></div><div class="wd">СЛОЙ</div></div>
+            <div class="meta">Анна Ковалёва · арт-директор<br>hello@sloy.design · +7 812 240 11 08</div>
+          </div>
+        </div>
+        <figcaption><span>02 — Визитка, офсет 350 г</span><span>Тиснение знака</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 06 ПАЛИТРА -->
+  <section class="plate" id="s6">
+    <div class="ph rv"><span class="ph-n">06</span><h2>Палитра и шрифты</h2><span class="ph-r">Нажмите на плашку — скопируется HEX</span></div>
+    <div class="chips rv" id="chips">
+      <div class="chip" style="background:#FF7A44;color:#14120F" data-hex="#FF7A44"><span class="nm">Светлая грань</span><span class="hx">#FF7A44</span></div>
+      <div class="chip" style="background:#FF6A2E;color:#14120F" data-hex="#FF6A2E"><span class="nm">Основной · Pantone 021</span><span class="hx">#FF6A2E</span></div>
+      <div class="chip" style="background:#E04A15;color:#FFF4EE" data-hex="#E04A15"><span class="nm">Лицевая грань</span><span class="hx">#E04A15</span></div>
+      <div class="chip" style="background:#BC340C;color:#FFE8DC" data-hex="#BC340C"><span class="nm">Теневая грань</span><span class="hx">#BC340C</span></div>
+      <div class="chip" style="background:#FFE2D2;color:#14120F" data-hex="#FFE2D2"><span class="nm">Тинт</span><span class="hx">#FFE2D2</span></div>
+      <div class="chip" style="background:#14120F;color:#F2EEE7" data-hex="#14120F"><span class="nm">Чернила</span><span class="hx">#14120F</span></div>
+      <div class="chip" style="background:#F2EEE7;color:#14120F" data-hex="#F2EEE7"><span class="nm">Бумага</span><span class="hx">#F2EEE7</span></div>
+    </div>
+    <div class="typo rv">
+      <div>
+        <span class="spec-name">Montserrat · 900</span>
+        <div class="samp-mont">Аа Бб</div>
+        <div class="use">Заголовки и лого-блок. Трекинг −4.5%. Только прописные.</div>
+      </div>
+      <div>
+        <span class="spec-name">IBM Plex Mono · 500</span>
+        <div class="samp-plex">30° · 1.2u</div>
+        <div class="use">Технические аннотации, размеры, номера листов.</div>
+      </div>
+      <div>
+        <span class="spec-name">Manrope · 400/500</span>
+        <div class="samp-man">Знак применяется на фирменных носителях без искажения пропорций: сохраняются углы 30°, толщина модуля и охранное поле в один шаг сетки.</div>
+        <div class="use">Основной текст, интерфейс, подписи.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 НЕДОПУСТИМО -->
+  <section class="plate" id="s7">
+    <div class="ph rv"><span class="ph-n">07</span><h2>Недопустимо</h2><span class="ph-r">Правила отклоняются целиком</span></div>
+    <div class="donts rv">
+      <div class="dont d1"><div class="mkbox"><div class="mk" data-mark="ink" data-pad="4"></div></div><div class="txt">Не растягивать<br>по осям</div></div>
+      <div class="dont d2"><div class="mkbox"><div class="mk" data-mark="ink" data-pad="4"></div></div><div class="txt">Не поворачивать<br>относительно сетки</div></div>
+      <div class="dont d3"><div class="mkbox"><div class="mk" data-mark="bad" data-pad="4"></div></div><div class="txt">Не перекрасивать<br>в чужие цвета</div></div>
+      <div class="dont d4"><div class="mkbox"><div class="mk" data-mark="ink" data-pad="4"></div></div><div class="txt">Не добавлять тени<br>и обводки</div></div>
+    </div>
+
+    <div class="dl">
+      <button class="btn acc" id="dlSvg"><i></i>Скачать SVG</button>
+      <button class="btn" id="dlPng"><i></i>PNG 512</button>
+      <button class="btn" id="dlFav"><i></i>Фавикон 512</button>
+    </div>
+
+    <div class="tblock">
+      <div class="tcell cell"><span class="k">Организация</span><span class="v">СЛОЙ</span></div>
+      <div class="tcell cell"><span class="k">Документ</span><span class="v">Граф. стандарт</span></div>
+      <div class="tcell cell"><span class="k">Лист</span><span class="v">01 из 01</span></div>
+      <div class="tcell cell"><span class="k">Масштаб</span><span class="v">1:1</span></div>
+      <div class="tcell cell"><span class="k">Ревизия</span><span class="v">03 · 02.2026</span></div>
+      <div class="tcell cell"><span class="k">Утвердил</span><span class="v">А. Ковалёва</span></div>
+    </div>
+  </section>
+
+  <footer class="sheetfoot">
+    <span>© 2026 СЛОЙ · Инженерная студия интерфейсов</span>
+    <span>Знак построен процедурно: 10 модулей · 30 полигонов · ось камеры 1,1,1</span>
+  </footer>
+</main>
+
+<div id="toast" role="status" aria-live="polite">Скопировано</div>
+
+<script>
+/* ============================================================
+   Знак «СЛОЙ» — единый источник геометрии
+   Камерная ось (1,1,1); экструзия 1.2u; сетка 4×4u
+   ============================================================ */
+const U = 100, H = 1.2, COS = Math.cos(Math.PI / 6);
+
+const CELLS = [];
+for (let y = 0; y < 4; y++) CELLS.push([0, y]);          // левая колонна
+for (let x = 1; x < 4; x++) { CELLS.push([x, 0]); CELLS.push([x, 3]); } // руки «С», открыта к +X
+
+const P = (x, y, z) => [(x - y) * COS * U, ((x + y) * 0.5 - z) * U];
+
+function facesFor(c) {
+  const [x, y] = c, z1 = H, z0 = 0;
+  return [
+    { k: 't', p: [P(x, y, z1), P(x + 1, y, z1), P(x + 1, y + 1, z1), P(x, y + 1, z1)] },
+    { k: 'l', p: [P(x, y + 1, z1), P(x + 1, y + 1, z1), P(x + 1, y + 1, z0), P(x, y + 1, z0)] },
+    { k: 'r', p: [P(x + 1, y, z1), P(x + 1, y + 1, z1), P(x + 1, y + 1, z0), P(x + 1, y, z0)] }
+  ];
+}
+
+const BB = (() => {
+  let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
+  CELLS.forEach(cell => facesFor(cell).forEach(f => f.p.forEach(p => {
+    a = Math.min(a, p[0]); b = Math.max(b, p[0]);
+    c = Math.min(c, p[1]); d = Math.max(d, p[1]);
+  })));
+  return { minX: a, maxX: b, minY: c, maxY: d, w: b - a, h: d - c };
+})();
+
+const PAL = {
+  color: { f: ['#FF7A44', '#E04A15', '#BC340C'], o: [1, 1, 1] },
+  ink:   { f: ['#14120F', '#14120F', '#14120F'], o: [1, .76, .54] },
+  bad:   { f: ['#5B8CFF', '#2F5BE0', '#1B39A8'], o: [1, 1, 1] },
+  paper: { f: ['#F2EEE7', '#F2EEE7', '#F2EEE7'], o: [1, .78, .56] },
+  spot:  { f: ['#FF6A2E', '#FF6A2E', '#FF6A2E'], o: [1, .8, .58] }
+};
+
+const ordered = CELLS.slice().sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
+const pts = p => p.map(q => q[0].toFixed(2) + ',' + q[1].toFixed(2)).join(' ');
+const plen = p => { let L = 0; for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; L += Math.hypot(b[0] - a[0], b[1] - a[1]); } return L; };
+
+function bodies(variant, animate) {
+  const pal = PAL[variant] || PAL.color;
+  let out = '', i = 0;
+  ordered.forEach(cell => {
+    let inner = '';
+    facesFor(cell).forEach(f => {
+      const idx = f.k === 't' ? 0 : (f.k === 'l' ? 1 : 2);
+      inner += '<polygon points="' + pts(f.p) + '" fill="' + pal.f[idx] + '" fill-opacity="' + pal.o[idx] +
+        '" stroke="' + pal.f[idx] + '" stroke-opacity="' + pal.o[idx] + '" stroke-width="0.8"/>';
+    });
+    out += '<g class="' + (animate ? 'vox' : '') + '" style="animation-delay:' + (i * 70) + 'ms">' + inner + '</g>';
+    i++;
+  });
+  return out;
+}
+
+function viewBox(pad) {
+  const p = typeof pad === 'number' ? { t: pad, r: pad, b: pad, l: pad } : (pad || { t: 6, r: 6, b: 6, l: 6 });
+  return [BB.minX - p.l, BB.minY - p.t, BB.w + p.l + p.r, BB.h + p.t + p.b];
+}
+
+function markSVG(opt) {
+  const o = opt || {};
+  const vb = viewBox(o.pad);
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb.map(n => n.toFixed(2)).join(' ') +
+    '" shape-rendering="geometricPrecision" aria-hidden="true">' + bodies(o.variant, o.animate) + '</svg>';
+}
+
+/* ---------- иконка / фавикон ---------- */
+function iconSVG(o) {
+  const s = (o && o.size) || 512, bg = (o && o.bg) || '#14120F';
+  const variant = (o && o.variant) || 'color';
+  const r = Math.round(s * ((o && o.radius !== undefined) ? o.radius : 0.22));
+  const scale = (s * 0.70) / Math.max(BB.w, BB.h);
+  const tx = s / 2 - ((BB.minX + BB.maxX) / 2) * scale;
+  const ty = s / 2 - ((BB.minY + BB.maxY) / 2) * scale;
+  const bgEl = bg === 'none' ? '' : '<rect width="' + s + '" height="' + s + '" rx="' + r + '" fill="' + bg + '"/>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '">' +
+    bgEl + '<g transform="translate(' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ') scale(' + scale.toFixed(4) + ')">' +
+    bodies(variant, false) + '</g></svg>';
+}
+
+/* ---------- чертёж: сетка, оси, размеры, охранное поле ---------- */
+function draftSVG(o) {
+  const opt = o || {};
+  const clear = !!opt.clear;
+  const pad = opt.pad || (clear ? { t: 150, r: 165, b: 215, l: 175 } : { t: 44, r: 70, b: 130, l: 70 });
+  const vb = viewBox(pad);
+  const dimY = BB.maxY + (clear ? 170 : 70);
+  const lines = [];
+  for (let k = -1; k <= 5; k++) {
+    lines.push([P(k, -1, 0), P(k, 5, 0)]);
+    lines.push([P(-1, k, 0), P(5, k, 0)]);
+  }
+  let grid = '';
+  lines.forEach((L, i) => {
+    const a = L[0], b = L[1], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    grid += '<line x1="' + a[0].toFixed(2) + '" y1="' + a[1].toFixed(2) + '" x2="' + b[0].toFixed(2) + '" y2="' + b[1].toFixed(2) +
+      '" stroke="#14120F" stroke-opacity=".16" stroke-width="1.6" stroke-dasharray="' + len.toFixed(1) + '" stroke-dashoffset="' + len.toFixed(1) +
+      '" style="stroke-dashoffset:' + len.toFixed(1) + ';transition:stroke-dashoffset .95s cubic-bezier(.35,0,.15,1) ' + (i * 22) + 'ms"/>';
+  });
+
+  let wire = '', wi = 0;
+  ordered.forEach(cell => facesFor(cell).forEach(f => {
+    const L = plen(f.p), d = 200 + (wi++ % 12) * 42;
+    wire += '<polygon points="' + pts(f.p) + '" fill="none" stroke="#14120F" stroke-opacity=".62" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="' +
+      L.toFixed(1) + '" stroke-dashoffset="' + L.toFixed(1) + '" style="stroke-dashoffset:' + L.toFixed(1) +
+      ';transition:stroke-dashoffset .9s cubic-bezier(.35,0,.15,1) ' + d + 'ms"/>';
+  }));
+
+  /* охранное поле */
+  let clearEl = '';
+  if (clear) {
+    const x = BB.minX - 100, y = BB.minY - 100, w = BB.w + 200, h = BB.h + 200;
+    clearEl = '<g class="dim"><rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h +
+      '" fill="none" stroke="#FF6A2E" stroke-width="2.4" stroke-dasharray="14 12"/>' +
+      tickPair(BB.minX, y, BB.minX, BB.minY, x - 34, (BB.minY + y) / 2, '1u') +
+      '<text x="' + (x + 12) + '" y="' + (y - 16) + '" font-family="IBM Plex Mono, monospace" font-size="21" letter-spacing="2" fill="#FF6A2E">ОХРАННОЕ ПОЛЕ 1u</text></g>';
+  }
+
+  /* размеры */
+  const dims = '<g class="dim">' +
+    ext(BB.minX, BB.maxY, dimY) + ext(BB.maxX, BB.maxY, dimY) +
+    '<line x1="' + BB.minX + '" y1="' + dimY + '" x2="-34" y2="' + dimY + '" stroke="#14120F" stroke-width="2.2"/>' +
+    '<line x1="34" y1="' + dimY + '" x2="' + BB.maxX + '" y2="' + dimY + '" stroke="#14120F" stroke-width="2.2"/>' +
+    '<line x1="' + BB.minX + '" y1="' + (dimY - 13) + '" x2="' + BB.minX + '" y2="' + (dimY + 13) + '" stroke="#14120F" stroke-width="2.2"/>' +
+    '<line x1="' + BB.maxX + '" y1="' + (dimY - 13) + '" x2="' + BB.maxX + '" y2="' + (dimY + 13) + '" stroke="#14120F" stroke-width="2.2"/>' +
+    '<text x="0" y="' + (dimY + 8) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="23" fill="#14120F">4u</text>' +
+    tickPair(BB.minX, BB.minY, BB.minX, BB.maxY, BB.minX - 46, (BB.minY + BB.maxY) / 2, '1.2u') +
+    /* угол 30° */
+    '<path d="M ' + (BB.minX + 74).toFixed(1) + ' ' + BB.maxY + ' A 74 74 0 0 1 ' +
+    (BB.minX + 74 * Math.cos(Math.PI / 6)).toFixed(1) + ' ' + (BB.maxY + 74 * 0.5).toFixed(1) +
+    '" fill="none" stroke="#FF6A2E" stroke-width="2.4"/>' +
+    '<line x1="' + BB.minX + '" y1="' + BB.maxY + '" x2="' + (BB.minX + 150) + '" y2="' + BB.maxY + '" stroke="#FF6A2E" stroke-width="2.4"/>' +
+    '<text x="' + (BB.minX + 108).toFixed(1) + '" y="' + (BB.maxY + 60) + '" font-family="IBM Plex Mono, monospace" font-size="23" fill="#FF6A2E">30°</text>' +
+    '</g>';
+
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb.map(n => n.toFixed(2)).join(' ') +
+    '" shape-rendering="geometricPrecision" aria-hidden="true">' +
+    '<g class="wire">' + grid + wire + '</g>' + clearEl + dims + '</svg>';
+
+  function ext(x, y, to) {
+    return '<line x1="' + x + '" y1="' + (y + 6) + '" x2="' + x + '" y2="' + to + '" stroke="#14120F" stroke-opacity=".45" stroke-width="1.6" stroke-dasharray="8 7"/>';
+  }
+  function tickPair(x1, y1, x2, y2, lx, ly, label) {
+    const horiz = Math.abs(x2 - x1) > Math.abs(y2 - y1);
+    const rot = horiz ? 0 : -90;
+    return '<g><line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#FF6A2E" stroke-width="2.2"/>' +
+      '<text x="' + lx + '" y="' + ly + '" text-anchor="middle" transform="rotate(' + rot + ' ' + lx + ' ' + ly + ')" ' +
+      'font-family="IBM Plex Mono, monospace" font-size="21" fill="#FF6A2E">' + label + '</text></g>';
+  }
+}
+
+/* ============================================================
+   Монтировка
+   ============================================================ */
+document.querySelectorAll('[data-mark]').forEach(el => {
+  let pad = el.dataset.pad || 6;
+  try { pad = JSON.parse(pad); } catch (e) { pad = Number(pad); }
+  el.innerHTML = markSVG({ variant: el.dataset.mark || 'color', pad: pad, animate: el.dataset.anim === '1' });
+  const svg = el.firstElementChild;
+  if (svg) { svg.style.width = '100%'; svg.style.height = 'auto'; svg.style.display = 'block'; }
+});
+
+document.querySelectorAll('[data-icon]').forEach(el => {
+  el.innerHTML = iconSVG({ size: 64, bg: '#14120F' });
+  const svg = el.firstElementChild;
+  if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; svg.style.display = 'block'; }
+});
+
+/* настоящая фавиконка страницы — из той же геометрии */
+document.getElementById('fav').href = 'data:image/svg+xml,' + encodeURIComponent(iconSVG({ size: 64, bg: '#14120F' }));
+
+/* чертёж в hero (с переключателем) и в плите 02 */
+const HERO_PAD = { t: 44, r: 70, b: 130, l: 70 };
+document.getElementById('draftLayer').innerHTML = draftSVG({ pad: HERO_PAD });
+document.getElementById('drawPanel').innerHTML = draftSVG({ clear: true });
+
+const stage = document.getElementById('stage');
+const VBHERO = viewBox(HERO_PAD);
+stage.style.aspectRatio = VBHERO[2].toFixed(1) + ' / ' + VBHERO[3].toFixed(1);
+const bMark = document.getElementById('btnMark');
+const bDraft = document.getElementById('btnDraft');
+function setMode(m) {
+  stage.classList.toggle('mode-draft', m === 'draft');
+  stage.classList.toggle('mode-mark', m !== 'draft');
+  bMark.classList.toggle('on', m !== 'draft');
+  bDraft.classList.toggle('on', m === 'draft');
+}
+bMark.addEventListener('click', () => setMode('mark'));
+bDraft.addEventListener('click', () => setMode('draft'));
+
+/* появление чертежа в плите 02 */
+const panel = document.getElementById('drawPanel');
+const drawIO = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) {
+    panel.querySelectorAll('[stroke-dashoffset]').forEach(n => { n.style.strokeDashoffset = '0'; });
+    drawIO.disconnect();
+  }
+}), { threshold: .25 });
+drawIO.observe(panel);
+
+/* переключатель hero — сбрасывает отрисовку линий */
+function animDraft(on) {
+  document.querySelectorAll('#draftLayer [stroke-dashoffset]').forEach(n => {
+    const v = n.getAttribute('stroke-dasharray');
+    n.style.strokeDashoffset = on ? '0' : v;
+  });
+}
+bDraft.addEventListener('click', () => animDraft(true));
+bMark.addEventListener('click', () => animDraft(false));
+
+/* появление блоков */
+const rvIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rvIO.unobserve(e.target); } }), { threshold: .14 });
+document.querySelectorAll('.rv').forEach((el, i) => { el.style.transitionDelay = (i % 3) * 70 + 'ms'; rvIO.observe(el); });
+
+/* скролл-спай по рейке */
+const links = [...document.querySelectorAll('#railnav a')];
+const spy = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { links.forEach(a => a.classList.toggle('on', a.dataset.t === e.target.id)); }
+}), { rootMargin: '-45% 0px -50% 0px' });
+document.querySelectorAll('main section[id]').forEach(s => spy.observe(s));
+
+/* копирование HEX */
+const toast = document.getElementById('toast');
+let tT;
+function say(msg) { toast.textContent = msg; toast.classList.add('on'); clearTimeout(tT); tT = setTimeout(() => toast.classList.remove('on'), 1700); }
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+  const hex = c.dataset.hex;
+  const done = () => say('Скопировано ' + hex);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(hex).then(done).catch(done);
+  else done();
+}));
+
+/* ---------- выгрузка ---------- */
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function rasterize(svgStr, size, name) {
+  const m = /viewBox="([-\d. ]+)"/.exec(svgStr);
+  const vb = m ? m[1].trim().split(/\s+/).map(Number) : [0, 0, 1, 1];
+  const W = size, H = Math.max(1, Math.round(size * (vb[3] / vb[2])));
+  const sized = svgStr.replace('<svg ', '<svg width="' + W + '" height="' + H + '" ');
+  const img = new Image();
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sized);
+  img.onload = () => {
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0, W, H);
+    cv.toBlob(b => { download(b, name); say('Готово: ' + name); }, 'image/png');
+  };
+  img.onerror = () => say('Ошибка экспорта');
+  img.src = url;
+}
+document.getElementById('dlSvg').addEventListener('click', () => {
+  const s = markSVG({ variant: 'color', pad: 24 });
+  download(new Blob([s], { type: 'image/svg+xml;charset=utf-8' }), 'sloy-znak.svg');
+  say('Готово: sloy-znak.svg');
+});
+document.getElementById('dlPng').addEventListener('click', () => {
+  rasterize(markSVG({ variant: 'color', pad: 24 }), 512, 'sloy-znak-512.png');
+});
+document.getElementById('dlFav').addEventListener('click', () => {
+  rasterize(iconSVG({ size: 512, bg: '#14120F' }), 512, 'sloy-favicon-512.png');
+});
+</script>
+</body>
+</html>
